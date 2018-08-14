@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE=socialmetrix/docker-events-notifier
+IMAGE=jmc265/docker-events-pushbullet
 VERSION=$(git describe --exact-match --tags HEAD 2>/dev/null)
 if [[ $? -ne 0 ]]; then
   echo "Current commit doesn't have a release tag. Won't build."

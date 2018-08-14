@@ -13,73 +13,54 @@
 # limitations under the License.
 
 import docker
-from slackclient import SlackClient
+from pushbullet import Pushbullet
 import os
 import sys
 import time
 import signal
 
-slack_token = None
-slack_channel = None
+pb_key = None
+event_filters = ["create","update","destroy","die","kill","pause","unpause","start","stop"]
 
 BUILD_VERSION=os.getenv('BUILD_VERSION')
-APP_NAME = 'Docker Events Notifier (v{})'.format(BUILD_VERSION)
-MAX_LOG_LINES=50
-MAX_LOG_CHARS=int(4000*.98) # slack messages can have at most 4000 chars
+APP_NAME = 'Docker Events PushBullet (v{})'.format(BUILD_VERSION)
 
-def get_config(env_key):
+def get_config(env_key, optional=False):
     value = os.getenv(env_key)
-    if not value:
+    if not value and not optional:
         print('Environment variable {} is missing. Can\'t continue'.format(env_key))
         sys.exit(1)
     return value
 
 
 def watch_and_notify_events(client):
-    event_filters = {"event": "die"}
+    global event_filters
+
+    event_filters = {"event": event_filters}
 
     for event in client.events(filters=event_filters, decode=True):
         container_id = event['Actor']['ID'][:12]
         attributes = event['Actor']['Attributes']
         when = time.strftime('%Y-%m-%d %H:%M:%S %Z', time.localtime(event['time']))
+        event['status'] = event['status']+'d'
 
-        message = ":rotating_light:  At _{}_ your container *{}* (_{}_) died. Image: *{}* Exit Code: *{}* Origin: *{}*" \
-            .format(when,
-                    attributes['name'],
-                    container_id,
-                    attributes['image'],
-                    attributes['exitCode'],
-                    host)
-
-        send_message(slack_channel, message)
-
-        try:
-            target = client.containers.get(container_id)
-            logs = target.logs(tail=MAX_LOG_LINES)
-            log_msg = "*Last log* entries are:\n\n```\n{}\n```".format(
-                logs.decode('utf8')[-MAX_LOG_CHARS:]
-            )
-            send_message(slack_channel, log_msg)
-        except docker.errors.NotFound:
-            send_message(slack_channel, 'Could not access the containers\' log. Probably it was removed (--rm option)')
-            pass
+        message = "The container {} ({}) {} at {}" \
+                .format(attributes['name'],
+                        attributes['image'],
+                        event['status'],
+                        when)
+        send_message(message)
 
 
-def send_message(channel, message):
-    global slack_token
-    global slack_channel
-    sc = SlackClient(slack_token)
-    sc.api_call(
-        "chat.postMessage",
-        channel=channel,
-        text=message
-    )
+def send_message(message):
+    global pb_key
+    pb = Pushbullet(pb_key)
+    pb.push_note("Docker Event", message)
     pass
 
 
 def exit_handler(_signo, _stack_frame):
-    send_message(slack_channel,
-                 ':disappointed: *{}* received *SIGTERM* on _{}_. Goodbye!'.format(APP_NAME, host))
+    send_message('{} received SIGTERM on {}. Goodbye!'.format(APP_NAME, host))
     sys.exit(0)
 
 
@@ -88,8 +69,10 @@ def host_server(client):
 
 
 if __name__ == '__main__':
-    slack_token = get_config("SLACK_API_KEY")
-    slack_channel = get_config("SLACK_CHANNEL")
+    pb_key = get_config("PB_API_KEY")
+    events_string = get_config("EVENTS", True)
+    if events_string:
+        event_filters = events_string.split(',')
 
     signal.signal(signal.SIGTERM, exit_handler)
     signal.signal(signal.SIGINT, exit_handler)
@@ -97,10 +80,9 @@ if __name__ == '__main__':
     client = docker.DockerClient(base_url='unix://var/run/docker.sock')
     host = host_server(client)
 
-    message = ':bulb: *{}* reporting for duty on _{}_. '.format(APP_NAME, host) + \
-              '  Alerts will be sent to this channel.'
+    message = '{} reporting for duty on {}'.format(APP_NAME, host)
 
-    send_message(slack_channel, message)
+    send_message(message)
 
     watch_and_notify_events(client)
     pass

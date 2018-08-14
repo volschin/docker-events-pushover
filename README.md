@@ -1,11 +1,12 @@
-# Docker Events Notifier
-Receive Slack notifications when a container dies
+# Docker Events PushBullet
+Receive PushBullet notifications when on docker container events
 
 ## How it works
 This image connects to the host machine socket, through a volume mapping, and listen [Docker Events API](https://docs.docker.com/engine/reference/api/docker_remote_api_v1.24/#/monitor-dockers-events).
 
-When a `die` event is triggered it sends the affected containers' information to the selected Slack channel.  
+When specified events are triggered it sends the affected containers' information to PushBullet.  
 
+If no events are specified in the enironment variables, these are the default ones: "create","update","destroy","die","kill","pause","unpause","start","stop"
 
 ## Build
 You must [create a release tag](https://git-scm.com/book/en/v2/Git-Basics-Tagging) in order to build and publish this image.
@@ -14,32 +15,25 @@ You must [create a release tag](https://git-scm.com/book/en/v2/Git-Basics-Taggin
 ```
 
 ## Run
-1. Because this app is just for you, you'll be fine with  a [Slack Tokens for Testing and Development](https://api.slack.com/docs/oauth-test-tokens)
+First get a PushBullet [Access Token](https://www.pushbullet.com/#settings)
 
-#### Single docker engine
-Run the container on a single docker engine, using slack api key and channel.
-
+### Run (default events)
 ```shell
 docker run \
     -d --restart=always \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    -e SLACK_API_KEY="xoxp-9999999999-9999999999-9999999999-99999999999999999999999" \
-    -e SLACK_CHANNEL="#foo" \
-    socialmetrix/docker-events-notifier:${VERSION}
+    -e PB_API_KEY="INSERT-KEY-HERE" \
+    jmc265/docker-events-pushbullet:latest
 ```
 
-#### Docker swarm mode
-Run the container on every node of your swarm.
-
+### Run (custom events)
 ```shell
-docker service create \
-    --mode global \
-    --restart-condition any \
-    --mount type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
-    -e SLACK_API_KEY="xoxp-9999999999-99999999999-999999999999-99999999999999999999999999999999" \
-    -e SLACK_CHANNEL="#foo" \
-    --name docker-events-notifier \
-    socialmetrix/docker-events-notifier:${VERSION}
+docker run \
+    -d --restart=always \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+    -e PB_API_KEY="INSERT-KEY-HERE" \
+    -e EVENTS="die,destroy,kill"
+    jmc265/docker-events-pushbullet:latest
 ```
 
 ## License
