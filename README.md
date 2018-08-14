@@ -48,7 +48,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - PB_API_KEY=INSERT-KEY-HERE
-      - EVENTS="die,destroy,kill"
+      - EVENTS=die,destroy,kill
     restart: unless-stopped
 
 ```
