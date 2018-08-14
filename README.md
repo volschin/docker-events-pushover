@@ -36,5 +36,22 @@ docker run \
     jmc265/docker-events-pushbullet:latest
 ```
 
+### Run (Docker Compose/Stack)
+```yml
+version: '2'
+ 
+services:
+  docker-events:
+    container_name: docker-events
+    image: jmc265/docker-events-pushbullet:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - PB_API_KEY=INSERT-KEY-HERE
+      - EVENTS="die,destroy,kill"
+    restart: unless-stopped
+
+```
+
 ## License
 Apache License Version 2.0
