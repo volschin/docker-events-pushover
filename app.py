@@ -21,6 +21,7 @@ import signal
 
 pb_key = None
 event_filters = ["create","update","destroy","die","kill","pause","unpause","start","stop"]
+ignore_names = []
 
 BUILD_VERSION=os.getenv('BUILD_VERSION')
 APP_NAME = 'Docker Events PushBullet (v{})'.format(BUILD_VERSION)
@@ -43,6 +44,9 @@ def watch_and_notify_events(client):
         attributes = event['Actor']['Attributes']
         when = time.strftime('%Y-%m-%d %H:%M:%S %Z', time.localtime(event['time']))
         event['status'] = event['status']+'d'
+
+        if attributes['name'] in ignore_names:
+            continue
 
         message = "The container {} ({}) {} at {}" \
                 .format(attributes['name'],
@@ -70,9 +74,14 @@ def host_server(client):
 
 if __name__ == '__main__':
     pb_key = get_config("PB_API_KEY")
+
     events_string = get_config("EVENTS", True)
     if events_string:
         event_filters = events_string.split(',')
+
+    ignore_strings = get_config("IGNORE_NAMES", True)
+    if ignore_strings:
+        ignore_names = ignore_strings.split(',')
 
     signal.signal(signal.SIGTERM, exit_handler)
     signal.signal(signal.SIGINT, exit_handler)
