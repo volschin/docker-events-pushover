@@ -14,15 +14,14 @@
 
 import docker
 from pushover import init, Client
-##from pushbullet import Pushbullet
 import os
 import sys
 import time
 import signal
 
-##pb_key = None
 event_filters = ["create","update","destroy","die","kill","pause","unpause","start","stop"]
 ignore_names = []
+ignore_label = "docker-events.ignore"
 
 BUILD_VERSION=os.getenv('BUILD_VERSION')
 APP_NAME = 'Docker Events Pushover (v{})'.format(BUILD_VERSION)
@@ -41,11 +40,25 @@ def watch_and_notify_events(client):
     event_filters = {"event": event_filters}
 
     for event in client.events(filters=event_filters, decode=True):
+#        print(event)
         container_id = event['Actor']['ID'][:12]
         attributes = event['Actor']['Attributes']
         when = time.strftime('%Y-%m-%d %H:%M:%S %Z', time.localtime(event['time']))
         event['status'] = event['status']+'d'
 
+        x = 'no'
+
+        try:
+            x = event['Actor']['Attributes']['docker-events.ignore']
+        except KeyError:
+            pass
+
+        if x != 'no':
+#            print('docker-events.ignore specified')
+            continue
+		
+#       print('docker-events.ignore NOT specified')
+			
         if attributes['name'] in ignore_names:
             continue
 
@@ -94,9 +107,8 @@ if __name__ == '__main__':
     client = docker.DockerClient(base_url='unix://var/run/docker.sock')
     host = host_server(client)
 
-    message = '{} reporting for duty on {}'.format(APP_NAME, host)
-
-    send_message(message)
+#    message = '{} reporting for duty on {}'.format(APP_NAME, host)
+#    send_message(message)
 
     watch_and_notify_events(client)
 
