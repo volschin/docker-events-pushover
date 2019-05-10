@@ -13,18 +13,19 @@
 # limitations under the License.
 
 import docker
-from pushbullet import Pushbullet
+from pushover import init, Client
+##from pushbullet import Pushbullet
 import os
 import sys
 import time
 import signal
 
-pb_key = None
+##pb_key = None
 event_filters = ["create","update","destroy","die","kill","pause","unpause","start","stop"]
 ignore_names = []
 
 BUILD_VERSION=os.getenv('BUILD_VERSION')
-APP_NAME = 'Docker Events PushBullet (v{})'.format(BUILD_VERSION)
+APP_NAME = 'Docker Events Pushover (v{})'.format(BUILD_VERSION)
 
 def get_config(env_key, optional=False):
     value = os.getenv(env_key)
@@ -57,9 +58,11 @@ def watch_and_notify_events(client):
 
 
 def send_message(message):
-    global pb_key
-    pb = Pushbullet(pb_key)
-    pb.push_note("Docker Event", message)
+    client = Client(po_key, api_token=po_token)
+    client.send_message(message,title="Docker Event")
+##    global pb_key
+##    pb = Pushbullet(pb_key)
+##    pb.push_note("Docker Event", message)
     pass
 
 
@@ -73,7 +76,9 @@ def host_server(client):
 
 
 if __name__ == '__main__':
-    pb_key = get_config("PB_API_KEY")
+##    pb_key = get_config("PB_API_KEY")
+    po_token = get_config("PUSHOVER_TOKEN")
+    po_key = get_config("PUSHOVER_KEY")
 
     events_string = get_config("EVENTS", True)
     if events_string:
@@ -94,4 +99,5 @@ if __name__ == '__main__':
     send_message(message)
 
     watch_and_notify_events(client)
+
     pass
