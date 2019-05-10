@@ -1,2 +1,2 @@
 docker
-pushbullet.py
+python-pushover
