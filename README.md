@@ -8,6 +8,8 @@ When specified events are triggered it sends the affected containers' informatio
 
 If no events are specified in the enironment variables, these are the default ones: "create","update","destroy","die","kill","pause","unpause","start","stop"
 
+If the label docker-events.ignore is specified, then that container will not be checked.
+
 ## Build
 You must [create a release tag](https://git-scm.com/book/en/v2/Git-Basics-Tagging) in order to build and publish this image.
 ```shell
