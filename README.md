@@ -28,7 +28,7 @@ docker run \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -e PUSHOVER_TOKEN="INSERT-TOKEN-HERE" \
     -e PUSHOVER_KEY="INSERT-KEY-HERE" \
-    derekoharrow/docker-events-pushover:latest
+    volschin/docker-events-pushover:latest
 ```
 
 ### Run (custom events)
@@ -39,7 +39,7 @@ docker run \
     -e PUSHOVER_TOKEN="INSERT-TOKEN-HERE" \
     -e PUSHOVER_KEY="INSERT-KEY-HERE" \
     -e EVENTS="die,destroy,kill"
-    derekoharrow/docker-events-pushover:latest
+    volschin/docker-events-pushover:latest
 ```
 
 ### Run (Docker Compose/Stack)
@@ -49,7 +49,7 @@ version: '2'
 services:
   docker-events:
     container_name: docker-events
-    image: derekoharrow/docker-events-pushover:latest
+    image: volschin/docker-events-pushover:latest
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
