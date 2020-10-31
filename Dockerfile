@@ -4,6 +4,12 @@ FROM python:3-alpine
 ARG BUILD_VERSION
 ENV BUILD_VERSION=${BUILD_VERSION}
 
+RUN apk update
+RUN apk add ca-certificates && update-ca-certificates
+RUN apk --update add tzdata
+
+ENV TZ=Europe/Berlin
+
 WORKDIR /usr/src/app
 
 COPY . /usr/src/app
